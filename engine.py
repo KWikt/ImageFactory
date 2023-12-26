@@ -4,15 +4,24 @@ import openpyxl
 import xml.etree.ElementTree as eTree
 import subprocess
 
+from PyQt5.QtWidgets import QMessageBox
+
 
 # Start full process of making card from xlsx and svg template.
-def process_starter(svg, xlsx, files_name, files_path, files_format, dpi):
+def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_dir, dpi=500):
 
-    workbook = openpyxl.load_workbook(xlsx)
-    sheet = workbook.active
-
-    tree = eTree.parse(svg)
-    root = tree.getroot()
+    try:
+        workbook = openpyxl.load_workbook(xlsx)
+        sheet = workbook.active
+    except FileNotFoundError:
+        QMessageBox.warning(None, "File not found", "Can't find xlsx file. Please check path.", QMessageBox.Ok)
+        return
+    try:
+        tree = eTree.parse(svg)
+        root = tree.getroot()
+    except FileNotFoundError:
+        QMessageBox.warning(None, "File not found", "Can't find svg file. Please check path.", QMessageBox.Ok)
+        return
 
     # Started from 3 because numbers (program) export xlsx with table name as row and second row is for column name.
     # Iterate over rows each loop give another row with data to process.
@@ -24,15 +33,22 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, dpi):
         else:
             unique_name = files_name
 
-        if unique_name == "None":
+        if name_receiver(sheet, i) == "None":
             return
         else:
             if files_format == "svg":
                 svg_maker(files_path, unique_name, new_root)
+                QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
             elif files_format == "png":
-                png_maker(files_path, unique_name, new_root, dpi)
+                if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir) is None:
+                    return
+                else:
+                    QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
             elif files_format == "pdf":
-                pdf_maker(files_path, unique_name, new_root)
+                if pdf_maker(files_path, unique_name, new_root, inkscape_dir) is None:
+                    return
+                else:
+                    QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
 
 
 # Take xlsx data file as sheet, make copy of provided svg root and take row_number to iterate over specific row in xls.
@@ -117,7 +133,7 @@ def svg_maker(file_path, file_name, xml_root):
 
 
 # Create png based on temporary SVG file from xml_root, change dpi for better resolution.
-def png_maker(file_path, file_name, xml_root, dpi):
+def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
     extension = ".png"
 
     # Check names if exists add number before.
@@ -129,23 +145,28 @@ def png_maker(file_path, file_name, xml_root, dpi):
     with open(svg_file_path, 'w') as svg_file:
         svg_file.write(eTree.tostring(xml_root).decode())
 
-    # Create PDF file using Inkscape
-    inkscape_cmd = [
-        '/Applications/Inkscape.app/Contents/MacOS/inkscape',
-        '--export-type=png',  # Change the export type to PNG
-        '--export-filename={}'.format(png_file_path),
-        '--export-dpi={}'.format(dpi),
-        svg_file_path
-    ]
-
-    subprocess.run(inkscape_cmd)
+    try:
+        # Create PDF file using Inkscape
+        inkscape_cmd = [
+            inkscape_exe,
+            '--export-type=png',
+            '--export-filename={}'.format(png_file_path),
+            '--export-dpi={}'.format(dpi),
+            svg_file_path
+        ]
+        # Run Inkscape.
+        subprocess.run(inkscape_cmd)
+    except FileNotFoundError:
+        QMessageBox.warning(None, "File not found", "Can't find inkscape.exe. Please check path.", QMessageBox.Ok)
+        os.remove(svg_file_path)
+        return None
 
     # Remove the temporary SVG file.
     os.remove(svg_file_path)
 
 
 # Create pdf based on temporary SVG file from xml_root.
-def pdf_maker(file_path, file_name, xml_root):
+def pdf_maker(file_path, file_name, xml_root, inkscape_exe):
     extension = ".pdf"
 
     # Check names if exists add number before.
@@ -157,27 +178,20 @@ def pdf_maker(file_path, file_name, xml_root):
     with open(svg_file_path, 'w') as svg_file:
         svg_file.write(eTree.tostring(xml_root).decode())
 
-    # Create PDF file using Inkscape
-    inkscape_cmd = [
-        '/Applications/Inkscape.app/Contents/MacOS/inkscape',
-        '--export-type=pdf',
-        '--export-filename={}'.format(pdf_file_path),
-        svg_file_path
-    ]
-
-    subprocess.run(inkscape_cmd)
+    try:
+        # Create PDF file using Inkscape.
+        inkscape_cmd = [
+            inkscape_exe,
+            '--export-type=pdf',
+            '--export-filename={}'.format(pdf_file_path),
+            svg_file_path
+        ]
+        # Run Inkscape.
+        subprocess.run(inkscape_cmd)
+    except FileNotFoundError:
+        QMessageBox.warning(None, "File not found", "Can't find inkscape exe. Please check path.", QMessageBox.Ok)
+        os.remove(svg_file_path)
+        return None
 
     # Remove the temporary SVG file.
     os.remove(svg_file_path)
-
-
-if __name__ == '__main__':
-
-    provided_dpi = 500
-    file_format = "png"
-    name_file = "%VAR_Name%"
-    out_path = "/Users/wiktorkrzywdzinski/Desktop/"
-    svg_path = "/Users/wiktorkrzywdzinski/Desktop/CardMaker/SVG_Templates/Cards/SpellTemplate.svg"
-    xls_path = "/Users/wiktorkrzywdzinski/Desktop/test.xlsx"
-
-    process_starter(svg_path, xls_path, name_file, out_path, file_format, provided_dpi)
