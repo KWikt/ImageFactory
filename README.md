@@ -18,7 +18,7 @@ Extension are three
 - SVG
    fastest work without providing DPI and inkscape.exe
 - PNG
-  Only PNG need DPI value to works, for me works well on 500 but feel free to use other.
+  Only this extension need DPI value to works, for me works well on 500 but feel free to use other.
 - PDF
 
 DPI - is only needed to formating PNG, this is done by Inkscape program.
@@ -32,7 +32,7 @@ Template Directory - Is path with file extension to your SVG template.
 Data Directory - Path with file name abd extebsuib to your XLSX.
 Output Directory - Path to folder where files will be saved.
 Inkscape Directory - path to Inkscape.exe.
-! On MacOS application/Inkscape doesn't work. You need path like this "/Applications/Inkscape.app/Contents/MacOS/inkscape" but i propose find by browse button.
+! On MacOS application/Inkscape doesn't work. You need path like this "/Applications/Inkscape.app/Contents/MacOS/inkscape" but i suggest find by browse button.
 
 Process button - should start program, it's done when you get window with text "Done".
 
