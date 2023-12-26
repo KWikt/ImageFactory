@@ -1,5 +1,6 @@
 import copy
 import os
+
 import openpyxl
 import xml.etree.ElementTree as eTree
 import subprocess
@@ -38,20 +39,15 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
         else:
             if files_format == "svg":
                 svg_maker(files_path, unique_name, new_root)
-                QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
             elif files_format == "png":
                 if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir) is None:
                     return
-                else:
-                    QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
             elif files_format == "pdf":
                 if pdf_maker(files_path, unique_name, new_root, inkscape_dir) is None:
                     return
-                else:
-                    QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
 
 
-# Take xlsx data file as sheet, make copy of provided svg root and take row_number to iterate over specific row in xls.
+# Take xlsx data file as sheet, make copy of provided svg root and take row_number to iterate over specific row in xlsx.
 # Return modified root.
 def root_modifier(sheet, root, row_number):
     new_root = copy.deepcopy(root)
@@ -75,7 +71,7 @@ def replace_values(xml_root, name_to_change, new_picture_name, cell_value):
     # IF YOU(I) CHANGE FOLDER WHERE PICTURE ARE YOU NEED FIND WHAT INKSCAPE DELETE AND CHANGE THAT.
     namespace = {'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'}
     attribute = './/*[@sodipodi:absref]'
-# Change text %VAR_some_text% to normal text in xls.
+# Change text %VAR_some_text% to normal text in xlsx.
     for element in xml_root.iter():
         if element.text == name_to_change in element.text:
             element.text = element.text.replace(name_to_change, cell_value)
@@ -163,6 +159,7 @@ def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
 
     # Remove the temporary SVG file.
     os.remove(svg_file_path)
+    return "Done"
 
 
 # Create pdf based on temporary SVG file from xml_root.
@@ -195,3 +192,4 @@ def pdf_maker(file_path, file_name, xml_root, inkscape_exe):
 
     # Remove the temporary SVG file.
     os.remove(svg_file_path)
+    return "Done"

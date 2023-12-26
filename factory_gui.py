@@ -186,6 +186,8 @@ class FactoryGui(QWidget):
         engine.process_starter(template_path, xlsx_path, text_value, out_path,
                                extension_value, ink_path, dpi_value)
 
+        QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
+
         # Save fields to the json.
         self.save_values_to_json("template", self.findChild(QLineEdit, "template").text())
         self.save_values_to_json("xlsx", self.findChild(QLineEdit, "xlsx").text())
