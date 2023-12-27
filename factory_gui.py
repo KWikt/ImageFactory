@@ -182,12 +182,9 @@ class FactoryGui(QWidget):
             if not ink_path:
                 ink_path = "nothing path"
 
-        if text_value or xlsx_path or out_path or template_path is None:
-            QMessageBox.information(None, "Information", "Please check for blank fields.", QMessageBox.Ok)
-        else:
-            # Start making process.
-            engine.process_starter(template_path, xlsx_path, text_value, out_path, extension_value, ink_path, dpi_value)
-            QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
+        # Start making process.
+        engine.process_starter(template_path, xlsx_path, text_value, out_path, extension_value, ink_path, dpi_value)
+        QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
 
         # Save fields to the json.
         self.save_values_to_json("template", self.findChild(QLineEdit, "template").text())

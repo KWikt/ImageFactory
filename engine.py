@@ -23,18 +23,17 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
     except FileNotFoundError:
         QMessageBox.warning(None, "File not found", "Can't find svg file. Please check path.", QMessageBox.Ok)
         return
-
     # Started from 3 because numbers (program) export xlsx with table name as row and second row is for column name.
     # Iterate over rows each loop give another row with data to process.
     for i in range(3, sheet.max_row + 1):
         new_root = root_modifier(sheet, root, i)
 
         if "%VAR_" in files_name:
-            unique_name = name_receiver(sheet, i)
+            unique_name = name_receiver(sheet, i, files_name)
         else:
             unique_name = files_name
-
-        if name_receiver(sheet, i) == "None":
+        if name_receiver(sheet, i, files_name) is None:
+            QMessageBox.warning(None, "Name error", "Please provide other Name.", QMessageBox.Ok)
             return
         else:
             if files_format == "svg":
@@ -87,14 +86,15 @@ def replace_values(xml_root, name_to_change, new_picture_name, cell_value):
 
 
 # Return unique card name from column named "Name".
-def name_receiver(sheet, row_number):
+def name_receiver(sheet, row_number, column_name):
     for row in sheet.iter_rows(min_row=row_number, max_row=row_number):
         # Loop over row that have name with data to search.
         for column in sheet.iter_rows(min_row=2, max_row=2):
             # Take column name and current row value and save it.
             for cell, name in zip(row, column):
-                card_name = str(cell.value)
-                return card_name
+                if column_name == "%VAR_" + str(name.value) + "%":
+                    card_name = str(cell.value)
+                    return card_name
 
 
 # Check if chosen file name exists if not add number incremented for each new copy.
@@ -131,7 +131,6 @@ def svg_maker(file_path, file_name, xml_root):
 # Create png based on temporary SVG file from xml_root, change dpi for better resolution.
 def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
     extension = ".png"
-
     # Check names if exists add number before.
     file_name = valid_name(file_path, file_name, extension)
     png_file_path = os.path.join(file_path, file_name)
