@@ -32,8 +32,7 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
             unique_name = name_receiver(sheet, i, files_name)
         else:
             unique_name = files_name
-        if name_receiver(sheet, i, files_name) is None:
-            QMessageBox.warning(None, "Name error", "Please provide other Name.", QMessageBox.Ok)
+        if unique_name is None:
             return
         else:
             if files_format == "svg":
@@ -93,6 +92,8 @@ def name_receiver(sheet, row_number, column_name):
             # Take column name and current row value and save it.
             for cell, name in zip(row, column):
                 if column_name == "%VAR_" + str(name.value) + "%":
+                    if cell.value is None:
+                        return None
                     card_name = str(cell.value)
                     return card_name
 
@@ -120,6 +121,7 @@ def svg_maker(file_path, file_name, xml_root):
     # Check names if exists add number before.
     file_name = valid_name(file_path, file_name, extension)
 
+
     file_path = os.path.join(file_path, file_name)
 
     xml_string = eTree.tostring(xml_root, encoding="utf-8", method="xml").decode()
@@ -141,7 +143,7 @@ def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
         svg_file.write(eTree.tostring(xml_root).decode())
 
     try:
-        # Create PDF file using Inkscape
+        # Create PNG file using Inkscape
         inkscape_cmd = [
             inkscape_exe,
             '--export-type=png',
@@ -155,10 +157,16 @@ def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
         QMessageBox.warning(None, "File not found", "Can't find inkscape.exe. Please check path.", QMessageBox.Ok)
         os.remove(svg_file_path)
         return None
+    except Exception as e:
+        # Handle other exceptions (e.g., Inkscape execution failure)
+        QMessageBox.warning(None, "Error", f"An error occurred: {e}", QMessageBox.Ok)
+        os.remove(svg_file_path)
+        return None
 
     # Remove the temporary SVG file.
     os.remove(svg_file_path)
-    return "Done"
+    return png_file_path
+
 
 
 # Create pdf based on temporary SVG file from xml_root.
