@@ -110,9 +110,9 @@ def valid_name(directory, file_name, extension):
                 if existing_file.startswith(original_name):
                     file_name = original_name + str(increment)
                     increment += 1
-            else:
-                # If the loop completes without finding the file
-                return file_name + extension
+        else:
+            # If the loop completes without finding the file
+            return file_name + extension
 
 
 # Take xml tree, name and save new file svg to provided path.
@@ -120,8 +120,8 @@ def svg_maker(file_path, file_name, xml_root):
     extension = ".svg"
     # Check names if exists add number before.
     file_name = valid_name(file_path, file_name, extension)
-
-
+    if file_name is None:
+        return
     file_path = os.path.join(file_path, file_name)
 
     xml_string = eTree.tostring(xml_root, encoding="utf-8", method="xml").decode()
@@ -135,6 +135,8 @@ def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
     extension = ".png"
     # Check names if exists add number before.
     file_name = valid_name(file_path, file_name, extension)
+    if file_name is None:
+        return
     png_file_path = os.path.join(file_path, file_name)
 
     # Create temporary SVG file.
@@ -168,13 +170,14 @@ def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
     return png_file_path
 
 
-
 # Create pdf based on temporary SVG file from xml_root.
 def pdf_maker(file_path, file_name, xml_root, inkscape_exe):
     extension = ".pdf"
 
     # Check names if exists add number before.
     file_name = valid_name(file_path, file_name, extension)
+    if file_name is None:
+        return
     pdf_file_path = os.path.join(file_path, file_name)
 
     # Create temporary SVG file.
