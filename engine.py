@@ -16,13 +16,13 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
         sheet = workbook.active
     except FileNotFoundError:
         QMessageBox.warning(None, "File not found", "Can't find xlsx file. Please check path.", QMessageBox.Ok)
-        return
+        return False
     try:
         tree = eTree.parse(svg)
         root = tree.getroot()
     except FileNotFoundError:
         QMessageBox.warning(None, "File not found", "Can't find svg file. Please check path.", QMessageBox.Ok)
-        return
+        return False
 
     # Started from 3 because numbers (program) export xlsx with table name as row and second row is for column name.
     # Iterate over rows each loop give another row with data to process.
@@ -35,16 +35,23 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
                 unique_name = files_name
 
             if unique_name is None:
-                return
+                return False
             else:
                 if files_format == "svg":
-                    svg_maker(files_path, unique_name, new_root, replace_file)
+                    if svg_maker(files_path, unique_name, new_root, replace_file) is None:
+                        return False
+                    else:
+                        return True
                 elif files_format == "png":
                     if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir, replace_file) is None:
-                        return
+                        return False
+                    else:
+                        return True
                 elif files_format == "pdf":
                     if pdf_maker(files_path, unique_name, new_root, inkscape_dir, replace_file) is None:
-                        return
+                        return False
+                    else:
+                        return True
 
 
 def quantity_print(sheet, row_number):
@@ -153,9 +160,16 @@ def svg_maker(file_path, file_name, xml_root, rep_value):
     file_path = os.path.join(file_path, file_name)
 
     xml_string = eTree.tostring(xml_root, encoding="utf-8", method="xml").decode()
-    # Save the SVG string to the specified file.
-    with open(file_path, 'w') as svg_file:
-        svg_file.write(xml_string)
+
+    try:
+        # Save the SVG string to the specified file.
+        with open(file_path, 'w') as svg_file:
+            svg_file.write(xml_string)
+    except FileNotFoundError:
+        QMessageBox.warning(None, "File not found", "Can't find Directory. Please check path.", QMessageBox.Ok)
+        return None
+
+    return "Done"
 
 
 # Create png based on temporary SVG file from xml_root, change dpi for better resolution.
@@ -169,10 +183,15 @@ def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe, rep_value):
 
     png_file_path = os.path.join(file_path, file_name)
 
-    # Create temporary SVG file.
-    svg_file_path = os.path.join(file_path, "temp.svg")
-    with open(svg_file_path, 'w') as svg_file:
-        svg_file.write(eTree.tostring(xml_root).decode())
+    try:
+        # Create temporary SVG file.
+        svg_file_path = os.path.join(file_path, "temp.svg")
+        with open(svg_file_path, 'w') as svg_file:
+            svg_file.write(eTree.tostring(xml_root).decode())
+    except FileNotFoundError:
+        QMessageBox.warning(None, "File not found", "Can't find Directory. Please check path.", QMessageBox.Ok)
+        os.remove(svg_file_path)
+        return None
 
     try:
         # Create PNG file using Inkscape
@@ -211,10 +230,15 @@ def pdf_maker(file_path, file_name, xml_root, inkscape_exe, rep_value):
 
     pdf_file_path = os.path.join(file_path, file_name)
 
-    # Create temporary SVG file.
-    svg_file_path = os.path.join(file_path, "temp.svg")
-    with open(svg_file_path, 'w') as svg_file:
-        svg_file.write(eTree.tostring(xml_root).decode())
+    try:
+        # Create temporary SVG file.
+        svg_file_path = os.path.join(file_path, "temp.svg")
+        with open(svg_file_path, 'w') as svg_file:
+            svg_file.write(eTree.tostring(xml_root).decode())
+    except FileNotFoundError:
+        QMessageBox.warning(None, "File not found", "Can't find inkscape.exe. Please check path.", QMessageBox.Ok)
+        os.remove(svg_file_path)
+        return None
 
     try:
         # Create PDF file using Inkscape.
