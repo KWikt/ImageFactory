@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 
 # Start full process of making card from xlsx and svg template.
-def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_dir, dpi=500):
+def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_dir, replace_file,  dpi=500):
 
     try:
         workbook = openpyxl.load_workbook(xlsx)
@@ -23,6 +23,7 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
     except FileNotFoundError:
         QMessageBox.warning(None, "File not found", "Can't find svg file. Please check path.", QMessageBox.Ok)
         return
+
     # Started from 3 because numbers (program) export xlsx with table name as row and second row is for column name.
     # Iterate over rows each loop give another row with data to process.
     for i in range(3, sheet.max_row + 1):
@@ -32,17 +33,33 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
                 unique_name = name_receiver(sheet, i, files_name)
             else:
                 unique_name = files_name
+
             if unique_name is None:
                 return
             else:
                 if files_format == "svg":
-                    svg_maker(files_path, unique_name, new_root)
+                    svg_maker(files_path, unique_name, new_root, replace_file)
                 elif files_format == "png":
-                    if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir) is None:
+                    if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir, replace_file) is None:
                         return
                 elif files_format == "pdf":
-                    if pdf_maker(files_path, unique_name, new_root, inkscape_dir) is None:
+                    if pdf_maker(files_path, unique_name, new_root, inkscape_dir, replace_file) is None:
                         return
+
+
+def quantity_print(sheet, row_number):
+    # Loop over rows that have name with data to search.
+    for row in sheet.iter_rows(min_row=row_number, max_row=row_number):
+        # Loop over columns (assuming the header is in the second row)
+        for cell, name_cell in zip(row, sheet[2]):
+            if "Quantity" in name_cell.value:
+                if cell.value is None:
+                    return 1
+                else:
+                    return int(cell.value)
+
+    # If "Quantity" is not found in any of the cells, return a default value (e.g., 1)
+    return 1
 
 
 # Take xlsx data file as sheet, make copy of provided svg root and take row_number to iterate over specific row in xlsx.
@@ -98,45 +115,41 @@ def name_receiver(sheet, row_number, column_name):
                     return card_name
 
 
-def quantity_print(sheet, row_number):
-    # Loop over rows that have name with data to search.
-    for row in sheet.iter_rows(min_row=row_number, max_row=row_number):
-        # Loop over columns (assuming the header is in the second row)
-        for cell, name_cell in zip(row, sheet[2]):
-            if "Quantity" in name_cell.value:
-                if cell.value is None:
-                    return 1
-                else:
-                    return int(cell.value)
-
-    # If "Quantity" is not found in any of the cells, return a default value (e.g., 1)
-    return 1
-
-
 # Check if chosen file name exists if not add number incremented for each new copy.
 # Return name that doesn't exist.
-def valid_name(directory, file_name, extension):
-    increment = 1
+def valid_name(directory, file_name, extension, replace):
     original_name = file_name
-    # Iterate through files in the directory
+
+    # If user has chosen to replace the file, return the original name.
+    if replace and os.path.isfile(os.path.join(directory, file_name + extension)):
+        return file_name + extension
+
+    increment = 1
+    existing_files = set()
+
+    # Iterate through files in the directory and store existing names in a set.
     for root, dirs, files in os.walk(directory):
         for existing_file in files:
-            if file_name + extension in files:
-                if existing_file.startswith(original_name):
-                    file_name = original_name + str(increment)
-                    increment += 1
-        else:
-            # If the loop completes without finding the file
-            return file_name + extension
+            existing_files.add(os.path.splitext(existing_file)[0])
+
+    # Check if the base name already exists, and if so, increment the file_name.
+    while file_name in existing_files:
+        file_name = original_name + str(increment)
+        increment += 1
+
+    # Return the new file name.
+    return file_name + extension
 
 
 # Take xml tree, name and save new file svg to provided path.
-def svg_maker(file_path, file_name, xml_root):
+def svg_maker(file_path, file_name, xml_root, rep_value):
     extension = ".svg"
     # Check names if exists add number before.
-    file_name = valid_name(file_path, file_name, extension)
+    file_name = valid_name(file_path, file_name, extension, rep_value)
+
     if file_name is None:
         return
+
     file_path = os.path.join(file_path, file_name)
 
     xml_string = eTree.tostring(xml_root, encoding="utf-8", method="xml").decode()
@@ -146,12 +159,14 @@ def svg_maker(file_path, file_name, xml_root):
 
 
 # Create png based on temporary SVG file from xml_root, change dpi for better resolution.
-def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
+def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe, rep_value):
     extension = ".png"
     # Check names if exists add number before.
-    file_name = valid_name(file_path, file_name, extension)
+    file_name = valid_name(file_path, file_name, extension, rep_value)
+
     if file_name is None:
         return
+
     png_file_path = os.path.join(file_path, file_name)
 
     # Create temporary SVG file.
@@ -186,13 +201,14 @@ def png_maker(file_path, file_name, xml_root, dpi, inkscape_exe):
 
 
 # Create pdf based on temporary SVG file from xml_root.
-def pdf_maker(file_path, file_name, xml_root, inkscape_exe):
+def pdf_maker(file_path, file_name, xml_root, inkscape_exe, rep_value):
     extension = ".pdf"
-
     # Check names if exists add number before.
-    file_name = valid_name(file_path, file_name, extension)
+    file_name = valid_name(file_path, file_name, extension, rep_value)
+
     if file_name is None:
         return
+
     pdf_file_path = os.path.join(file_path, file_name)
 
     # Create temporary SVG file.

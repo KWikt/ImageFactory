@@ -1,7 +1,8 @@
 import json
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
-                             QSpacerItem, QSizePolicy, QComboBox, QLineEdit, QLabel, QFileDialog, QMessageBox)
+                             QSpacerItem, QSizePolicy, QComboBox, QLineEdit, QLabel, QFileDialog, QMessageBox,
+                             QCheckBox)
 import sys
 import engine
 import os
@@ -34,6 +35,11 @@ class FactoryGui(QWidget):
         dropdown_list.addItem("png")
         dropdown_list.addItem("pdf")
         dropdown_list.addItem("svg")
+
+        # Create a label and a checkbox for enabling/disabling overwrite files.
+        overwrite_label = QLabel("Enable overwrite files:", self)
+        overwrite_checkbox = QCheckBox(self)
+        overwrite_checkbox.setObjectName("overwrite_box")
 
         # Create a label and a field for entering an integer.
         dpi_label = QLabel("DPI:", self)
@@ -73,6 +79,7 @@ class FactoryGui(QWidget):
 
         # Connect button signals to functions.
         process_button.clicked.connect(self.process_button_work)
+        overwrite_checkbox.stateChanged.connect(self.toggle_overwrite_box)
         template_button.clicked.connect(lambda: self.browse_button_file(svg_field, "template"))
         xlsx_button.clicked.connect(lambda: self.browse_button_file(xlsx_field, "xlsx"))
         out_button.clicked.connect(lambda: self.browse_button_directory(out_field, "out"))
@@ -83,6 +90,13 @@ class FactoryGui(QWidget):
 
         # Spaces between fields.
         main_layout.setSpacing(5)
+
+        # Create a sub-layout for overwrite file.
+        overwrite_box_layout = QHBoxLayout()
+        overwrite_box_layout.addWidget(overwrite_label)
+        overwrite_box_layout.addWidget(overwrite_checkbox)
+        overwrite_box_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        main_layout.addLayout(overwrite_box_layout)
 
         # Create a sub-layout for the File Extension.
         extension_layout = QHBoxLayout()
@@ -147,12 +161,15 @@ class FactoryGui(QWidget):
         self.setLayout(main_layout)
         # Take values from json and replace them
         self.receive_values_from_json(CONFIG_FILE, svg_field, xlsx_field, out_field, ink_field,
-                                      text_field, dropdown_list, dpi_field)
+                                      text_field, dropdown_list, dpi_field, overwrite_checkbox)
 
     def process_button_work(self):
 
         # Get the selected value from the dropdown list.
         extension_value = self.findChild(QComboBox, "extensions").currentText()
+
+        # Get the value from overwrite box.
+        overwrite_files = self.findChild(QCheckBox, "overwrite_box").checkState()
 
         # Get the paths to the selected files.
         text_value = self.findChild(QLineEdit, "text").text()
@@ -183,7 +200,8 @@ class FactoryGui(QWidget):
                 ink_path = "nothing path"
 
         # Start making process.
-        engine.process_starter(template_path, xlsx_path, text_value, out_path, extension_value, ink_path, dpi_value)
+        engine.process_starter(template_path, xlsx_path, text_value, out_path, extension_value, ink_path,
+                               overwrite_files, dpi_value)
         QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
 
         # Save fields to the json.
@@ -194,6 +212,14 @@ class FactoryGui(QWidget):
         self.save_values_to_json("text_value", text_value)
         self.save_values_to_json("extension_value", extension_value)
         self.save_values_to_json("dpi_value", dpi_value)
+        self.save_values_to_json("overwrite", overwrite_files)
+
+
+    def toggle_overwrite_box(self, state):
+        if state == Qt.Checked:
+            return True
+        else:
+            return False
 
     def browse_button_file(self, file_field, path_key):
 
@@ -215,7 +241,7 @@ class FactoryGui(QWidget):
             file_field.setText(selected_directory)
             self.save_values_to_json(path_key, selected_directory)
 
-    def receive_values_from_json(self, json_file, svg, xlsx, out, ink, text, extension, dpi):
+    def receive_values_from_json(self, json_file, svg, xlsx, out, ink, text, extension, dpi, overwrite_box):
         # Search for path to json settings if not found created new.
         if not os.path.exists(json_file):
             self.saved_paths = self.create_json()
@@ -229,6 +255,7 @@ class FactoryGui(QWidget):
             text.setText(self.saved_paths.get("text_value", ""))
             extension.setCurrentText(self.saved_paths.get("extension_value", ""))
             dpi.setText(str(self.saved_paths.get("dpi_value", "")))
+            overwrite_box.setCheckState(self.saved_paths.get("overwrite", ""))
 
     def save_values_to_json(self, key, value):
         # Save a key-value pair to the internal state
@@ -251,7 +278,8 @@ class FactoryGui(QWidget):
             "ink": "",
             "text_value": "",
             "extension_value": "",
-            "dpi_value": ""
+            "dpi_value": "",
+            "overwrite": ""
         }
         return factory_json
 
@@ -265,6 +293,7 @@ class FactoryGui(QWidget):
         self.save_values_to_json("text_value", self.findChild(QLineEdit, "text").text())
         self.save_values_to_json("extension_value", self.findChild(QComboBox, "extensions").currentText())
         self.save_values_to_json("dpi_value", self.findChild(QLineEdit, "dpi").text())
+        self.save_values_to_json("overwrite", self.findChild(QCheckBox, "overwrite_box").checkState())
 
         self.save_json()
         event.accept()
