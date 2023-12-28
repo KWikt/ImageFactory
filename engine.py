@@ -26,23 +26,23 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
     # Started from 3 because numbers (program) export xlsx with table name as row and second row is for column name.
     # Iterate over rows each loop give another row with data to process.
     for i in range(3, sheet.max_row + 1):
-        new_root = root_modifier(sheet, root, i)
-
-        if "%VAR_" in files_name:
-            unique_name = name_receiver(sheet, i, files_name)
-        else:
-            unique_name = files_name
-        if unique_name is None:
-            return
-        else:
-            if files_format == "svg":
-                svg_maker(files_path, unique_name, new_root)
-            elif files_format == "png":
-                if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir) is None:
-                    return
-            elif files_format == "pdf":
-                if pdf_maker(files_path, unique_name, new_root, inkscape_dir) is None:
-                    return
+        for quantity in range(quantity_print(sheet, i)):
+            new_root = root_modifier(sheet, root, i)
+            if "%VAR_" in files_name:
+                unique_name = name_receiver(sheet, i, files_name)
+            else:
+                unique_name = files_name
+            if unique_name is None:
+                return
+            else:
+                if files_format == "svg":
+                    svg_maker(files_path, unique_name, new_root)
+                elif files_format == "png":
+                    if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir) is None:
+                        return
+                elif files_format == "pdf":
+                    if pdf_maker(files_path, unique_name, new_root, inkscape_dir) is None:
+                        return
 
 
 # Take xlsx data file as sheet, make copy of provided svg root and take row_number to iterate over specific row in xlsx.
@@ -96,6 +96,21 @@ def name_receiver(sheet, row_number, column_name):
                         return None
                     card_name = str(cell.value)
                     return card_name
+
+
+def quantity_print(sheet, row_number):
+    # Loop over rows that have name with data to search.
+    for row in sheet.iter_rows(min_row=row_number, max_row=row_number):
+        # Loop over columns (assuming the header is in the second row)
+        for cell, name_cell in zip(row, sheet[2]):
+            if "Quantity" in name_cell.value:
+                if cell.value is None:
+                    return 1
+                else:
+                    return int(cell.value)
+
+    # If "Quantity" is not found in any of the cells, return a default value (e.g., 1)
+    return 1
 
 
 # Check if chosen file name exists if not add number incremented for each new copy.
