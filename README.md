@@ -16,6 +16,8 @@ Than you need to fill rest row with data that you want to replace.
 
 3. Open ImageFactory
 
+Overwrite files checkbox - user can choose to make new files or overwrite existing files.
+
 Extension are three
 - SVG
    fastest work without providing DPI and inkscape.exe
