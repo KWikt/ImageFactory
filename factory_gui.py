@@ -37,7 +37,7 @@ class FactoryGui(QWidget):
         dropdown_list.addItem("svg")
 
         # Create a label and a checkbox for enabling/disabling overwrite files.
-        overwrite_label = QLabel("Enable overwrite files:", self)
+        overwrite_label = QLabel("Overwrite files:", self)
         overwrite_checkbox = QCheckBox(self)
         overwrite_checkbox.setObjectName("overwrite_box")
 
@@ -200,9 +200,10 @@ class FactoryGui(QWidget):
                 ink_path = "nothing path"
 
         # Start making process.
-        engine.process_starter(template_path, xlsx_path, text_value, out_path, extension_value, ink_path,
-                               overwrite_files, dpi_value)
-        QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
+        is_error = engine.process_starter(template_path, xlsx_path, text_value, out_path, extension_value,
+                                          ink_path, overwrite_files, dpi_value)
+        if is_error is not False:
+            QMessageBox.information(None, "Information", "Done.", QMessageBox.Ok)
 
         # Save fields to the json.
         self.save_values_to_json("template", self.findChild(QLineEdit, "template").text())
@@ -213,7 +214,6 @@ class FactoryGui(QWidget):
         self.save_values_to_json("extension_value", extension_value)
         self.save_values_to_json("dpi_value", dpi_value)
         self.save_values_to_json("overwrite", overwrite_files)
-
 
     def toggle_overwrite_box(self, state):
         if state == Qt.Checked:
