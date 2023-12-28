@@ -1,6 +1,8 @@
 # ImageFactory
 Program for making fast image with PDF, SVG or PNG extension from SVG template and XLSX data.
 
+Prgoram requirements: Python 3.0+ and Inkscape.
+
 1.First Create or take SVG from Inkscape (Other program will be not checked).
 
 To change text all your text fields need to start with %VAR_ and end with % (e.g %VAR_Name%).
@@ -24,9 +26,8 @@ Extension are three
 DPI - is only needed to formating PNG, this is done by Inkscape program.
 
 File name - can be use on first column %VAR_<something>% or different as you like.
-! %VAR take first column only.
-? If you use different name all next files will be incremented.
-? If file exists it will be incremented.
+- If you use different name all next files will be incremented.
+- If file exists it will be incremented.
 
 Template Directory - Is path with file extension to your SVG template.
 Data Directory - Path with file name abd extebsuib to your XLSX.
@@ -38,5 +39,5 @@ Process button - should start program, it's done when you get window with text "
 
 Worth mention:
 - SVG template broke when you change picture directory. You need manualy link them in inkscape.
-
+- You can add column to xlsx named "Quantity" to make more copy of same image in one process.
  
