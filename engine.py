@@ -27,6 +27,7 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
     # Started from 3 because numbers (program) export xlsx with table name as row and second row is for column name.
     # Iterate over rows each loop give another row with data to process.
     for i in range(3, sheet.max_row + 1):
+        error = True
         for quantity in range(quantity_print(sheet, i)):
             new_root = root_modifier(sheet, root, i)
             if "%VAR_" in files_name:
@@ -35,24 +36,19 @@ def process_starter(svg, xlsx, files_name, files_path, files_format, inkscape_di
                 unique_name = files_name
 
             if unique_name is None:
-                return False
+                error = False
             else:
                 if files_format == "svg":
                     if svg_maker(files_path, unique_name, new_root, replace_file) is None:
-                        return False
-                    else:
-                        return True
+                        error = False
                 elif files_format == "png":
                     if png_maker(files_path, unique_name, new_root, dpi, inkscape_dir, replace_file) is None:
-                        return False
-                    else:
-                        return True
+                        error = False
                 elif files_format == "pdf":
                     if pdf_maker(files_path, unique_name, new_root, inkscape_dir, replace_file) is None:
-                        return False
-                    else:
-                        return True
-
+                        error = False
+        if not error:
+            print("error")
 
 def quantity_print(sheet, row_number):
     # Loop over rows that have name with data to search.
