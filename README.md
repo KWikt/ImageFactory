@@ -1,4 +1,4 @@
-# ImageFactory 1.0.0
+# ImageFactory 1.0.1
 Program for making fast image with PDF, SVG or PNG extension from SVG template and XLSX data.
 
 Prgoram requirements: Python 3.0+ and Inkscape.
